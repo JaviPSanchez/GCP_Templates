@@ -1,7 +1,2 @@
-<<<<<<< HEAD
 01_GCP_Native/.env
 assets/*.excalidraw
-=======
-.env
-*.excalidraw
->>>>>>> 03-GCP-Mage
