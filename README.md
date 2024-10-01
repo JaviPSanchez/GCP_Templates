@@ -11,7 +11,7 @@
 
 select you desired branch and clone it
 
-👉 git clone <branch> <folder>
+👉 git clone branch .
 
 ## Google Platform Projects: 3 Practical Demos
 
