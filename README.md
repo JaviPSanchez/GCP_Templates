@@ -1,6 +1,6 @@
 # [Atalaya Digital - Data Solutions](https://atalaya.digital)
 
-[![Image](./assets/gcp-hero.png "GCP Professional Engineer Projects")]
+![Image](./assets/gcp-hero.png "GCP Professional Engineer Projects")
 
 ## Project Details
 
