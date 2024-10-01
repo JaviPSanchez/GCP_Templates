@@ -17,6 +17,8 @@ select you desired branch and clone it
 
 ### First Project
 
+![Image](./assets/gcp-native.png "GCP Professional Engineer Projects")
+
 1.  Cloud Scheduler
 2.  Cloud Pub/Sub
 3.  Cloud Functions
@@ -30,6 +32,8 @@ select you desired branch and clone it
 
 ### Second Project
 
+![Image](./assets/gcp-airflow.png "GCP Professional Engineer Projects")
+
 1.  Cloud Composer - Airflow
 2.  Cloud Dataflow
 3.  Looker Studio
@@ -39,6 +43,8 @@ select you desired branch and clone it
 7.  IAM & Admin
 
 ### Third Project
+
+![Image](./assets/gcp-mage.png "GCP Professional Engineer Projects")
 
 1.  Mage
 2.  Grafana
