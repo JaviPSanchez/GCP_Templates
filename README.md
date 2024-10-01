@@ -2,7 +2,7 @@
 
 [![Image](gcp-projects.png "GCP Professional Engineer Projects")]
 
-## [Project Details]
+## Project Details
 
 - **Title:** [Atalaya Digital - Data Solutions](https://atalaya.digital)
 - **Sub Title:** Start your Google Cloud Journey with 3 practical demos.
