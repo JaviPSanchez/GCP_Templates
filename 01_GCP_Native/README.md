@@ -1,6 +1,6 @@
 ### First Project
 
-![Image](./assets/gcp-native.png "GCP Professional Engineer Projects")
+![Image](../assets/gcp-native.png "GCP Professional Engineer Projects")
 
 1.  Cloud Scheduler
 2.  Cloud Pub/Sub
