@@ -1,4 +1,5 @@
-01_GCP_Native/.env.local
+01_GCP_Native/src/.env.local
 01_GCP_Native/venv
-01_GCP_Native/key_access_sql.json
+01_GCP_Native/src/key_access_sql.json
+01_GCP_Native/src/*.ipynb
 assets/*.excalidraw
