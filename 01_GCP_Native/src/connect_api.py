@@ -3,21 +3,25 @@ import requests
 import logging
 import os
 from dotenv import load_dotenv
-# Google environment
-# from google.cloud import pubsub_v1
+from google.cloud import pubsub_v1
 
 # Load environment variables from .env file
 load_dotenv(".env.local")
 
-# https://developers.coinranking.com/api/documentation
+# Environment variables
 BASE_URL = os.getenv("BASE_URL")
 API_KEY = os.getenv("API_KEY")
+COIN = os.getenv("COIN")
+
 PROJECT_ID = os.getenv("PROJECT_ID")
+REGION = os.getenv("REGION")
+
 TOPIC_ID = os.getenv("TOPIC_ID")
 
-# def pull_from_api(event, context):
-def pull_from_api():
-    """Function to make an http request to the api endpoint
+def pull_from_api(event, context):
+    print(f"Event: {event}")
+    print(f"Context: {context}")
+    """Function to make an HTTP request to the API endpoint
 
     Args:
         event (_type_): Text message coming from the Scheduler
@@ -32,31 +36,47 @@ def pull_from_api():
     if not API_KEY:
         logging.error("Error: API_KEY is not set.")
         return
+    if not COIN:
+        logging.error("Error: COIN is not set.")
+        return
 
     headers = {
         'x-access-token': API_KEY
     }
 
+    data_json = None  # Initialize data_json
+
     try:
         # Make the API request
-        response = requests.get(f"{BASE_URL}/coins", headers=headers)
+        response = requests.get(f"{BASE_URL}/coin/{COIN}", headers=headers)
         response.raise_for_status()  # Raise error for HTTP errors
         data_json = response.json()
-        print(data_json["data"]['coins'][0])
     except requests.exceptions.RequestException as e:
         logging.error(f"API request error: {e}")
-        
-    # Writing to our message queue PubSub
-    # publisher = pubsub_v1.PublisherClient()
-    # The `topic_path` method creates a fully qualified identifier
-    # in the form `projects/{project_id}/topics/{topic_id}` to tell
-    # where should be written
-    # topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
+        return  # Exit the function if API request fails
     
-    # Create the string
-    # message = json.dumps(data_json).encode("utf-8")
-    # future1 = publisher.publish(topic_path, message)
-    # print(future1.result())
+    print(f"Json Data: {data_json["data"]["coin"]}")
 
-pull_from_api()
+    # Ensure data_json was successfully retrieved
+    if data_json:
+        try:
+            print(f"Creating Publisher...")
+            # Writing to our message queue Pub/Sub
+            publisher = pubsub_v1.PublisherClient()
+            print(f"Publisher: {publisher}")  
+            # Creating Topic         
+            topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
+            print(f"Topic Path: {topic_path}")
+            # Creating Message: Data coming from data
+            message = json.dumps(data_json["data"]["coin"]).encode("utf-8")
+            print(f"Message: {message}")
+            # Send Message 
+            future1 = publisher.publish(topic_path, message)
+            print(f"Message published with result: {future1.result()}")
+        except Exception as e:
+            logging.error(f"Error publishing message: {e}")
+    else:
+        logging.error("No data received from API; nothing to publish.")
 
+# Uncomment this line if you want to run the function directly
+pull_from_api(None, None)

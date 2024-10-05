@@ -2,4 +2,5 @@
 01_GCP_Native/venv
 01_GCP_Native/src/key_access_sql.json
 01_GCP_Native/src/*.ipynb
+01_GCP_Native/src/*.txt
 assets/*.excalidraw

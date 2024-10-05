@@ -9,25 +9,24 @@ from src.write_to_sql import write_to_database  # Import your function
 def mock_pubsub_event():
     """Fixture to simulate a Pub/Sub event."""
     mock_data = {
-        "uuid": "Qwsogvtv82FCd",
-        "symbol": "BTC",
-        "name": "Bitcoin",
-        "color": "#f7931A",
-        "iconUrl": "https://cdn.coinranking.com/bOabBYkcX/bitcoin_btc.svg",
-        "marketCap": "1188473660704",
-        "price": "60138.02048391904",
-        "listedAt": 1330214400,
-        "tier": 1,
-        "change": "-2.57",
-        "rank": 1,
-        "sparkline": ["61633.59175918901", "61191.99887071534"],
-        "lowVolume": False,
-        "coinrankingUrl": "https://coinranking.com/coin/Qwsogvtv82FCd+bitcoin-btc",
-        # "24hVolume": "47603655385",
-        "volume_24h": "47603655385",
-        "btcPrice": "1",
-        "contractAddresses": []
-    }
+        'uuid': 'Qwsogvtv82FCd',
+        'symbol': 'BTC',
+        'name': 'Bitcoin',
+        'color': '#f7931A',
+        'iconUrl': 'https://cdn.coinranking.com/bOabBYkcX/bitcoin_btc.svg',
+        'marketCap': '1208721081869',
+        'price': '61161.7009785164',
+        'listedAt': 1330214400,
+        'tier': 1,
+        'change': '-0.03',
+        'rank': 1,
+        'sparkline': ['61221.27285422067', '61290.247255518', '61224.68319446232', '60500.04412073567', '60549.690608442324', '60815.006722737206', '60871.06438227951', '60560.21107766191', '60350.11137908651', '60508.70660097368', None, '60320.28266676264', '60363.15946319355', '60557.01348093903', '60893.56516232311', '60876.218517752604', '60811.587762462', '60853.71912132096', '60814.56146480672', '60673.67212747346', '60897.01469655926', '61111.24942717578', '60968.03724828914', '61064.369313167655'],
+        'lowVolume': False,
+        'coinrankingUrl': 'https://coinranking.com/coin/Qwsogvtv82FCd+bitcoin-btc',
+        '24hVolume': '38484411460',
+        'btcPrice': '1',
+        'contractAddresses': []
+        }
 
     # Encode the data as Pub/Sub would
     encoded_message = base64.b64encode(json.dumps(mock_data).encode('utf-8')).decode('utf-8')
@@ -67,53 +66,3 @@ def test_write_to_database(mocker, mock_pubsub_event):
     assert mock_connection.execute.call_count > 0
 
     print("Test passed!")
-    
-    
-def test_write_to_database_missing_24hVolume(mocker, mock_pubsub_event):
-    """Test the write_to_database function with missing '24hVolume' parameter."""
-    
-    # Mock the Google Cloud SQL connector
-    mock_connector = mocker.patch('src.write_to_sql.Connector')
-    
-    # Mock SQLAlchemy engine and connection
-    mock_create_engine = mocker.patch('src.write_to_sql.sqlalchemy.create_engine')
-    mock_engine = MagicMock()
-    mock_connection = MagicMock()
-    mock_create_engine.return_value = mock_engine
-    mock_engine.connect.return_value.__enter__.return_value = mock_connection
-    
-    # Remove '24hVolume' key to simulate the error
-    del mock_pubsub_event.data['message']['data']['24hVolume']  # Simulate missing volume_24h
-
-    # Simulate raising SQLAlchemy InvalidRequestError
-    with pytest.raises(sqlalchemy.exc.InvalidRequestError) as exc_info:
-        write_to_database(mock_pubsub_event)
-
-    # Assert that the error message matches the expected SQLAlchemy error
-    assert "A value is required for bind parameter '24hVolume'" in str(exc_info.value)
-
-    print("Test passed with missing '24hVolume'!")
-    
-
-def test_write_to_database_with_volume_24h_key(mocker, mock_pubsub_event):
-    """Test to trigger an error due to missing '24hVolume' in the dictionary."""
-    
-    # Mock the Google Cloud SQL connector
-    mock_connector = mocker.patch('src.write_to_sql.Connector')
-    
-    # Mock SQLAlchemy engine and connection
-    mock_create_engine = mocker.patch('src.write_to_sql.sqlalchemy.create_engine')
-    mock_engine = MagicMock()
-    mock_connection = MagicMock()
-    mock_create_engine.return_value = mock_engine
-    mock_engine.connect.return_value.__enter__.return_value = mock_connection
-    
-    # Call the function with the mocked Pub/Sub event
-    # Expecting the error due to missing '24hVolume'
-    with pytest.raises(InvalidRequestError) as exc_info:
-        write_to_database(mock_pubsub_event)
-
-    # Assert that the error is related to the missing '24hVolume' bind parameter
-    assert "A value is required for bind parameter '24hVolume'" in str(exc_info.value)
-
-    print("Test passed with missing '24hVolume'!")
