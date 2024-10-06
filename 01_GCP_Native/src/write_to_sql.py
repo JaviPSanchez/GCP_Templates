@@ -4,24 +4,16 @@ import logging
 import base64
 import sqlalchemy
 import json
-import re
 from datetime import datetime
 from sqlalchemy import create_engine, text
 from google.cloud.sql.connector import Connector
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 import functions_framework
-from collections import OrderedDict
 print("Done!!!")
 
 # Load environment variables from .env file
 load_dotenv(".env.local")
-
-# Set the environment variable for Google Application Credentials
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./key_access_sql.json"
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)  # You can change this to DEBUG for more detailed logs
 
 # Google Cloud SQL connection information
 PROJECT_ID = os.getenv("PROJECT_ID")
@@ -33,8 +25,6 @@ DB_NAME = os.getenv("DB_NAME")
 
 # Instance connection name
 INSTANCE_CONNECTION_NAME = f"{PROJECT_ID}:{REGION}:{INSTANCE_NAME}"
-# print(f"Instance connection name: {INSTANCE_CONNECTION_NAME}")
-
 
 # Triggered from a message on a Cloud Pub/Sub topic.
 @functions_framework.cloud_event
@@ -43,63 +33,76 @@ def write_to_database(cloud_event):
     Google Cloud Functions framework when an event is triggered.
 
     Args:
-        cloud_event (Object): 
+        cloud_event (Object):
     """
+    print(f"Cloud Event: {cloud_event}")
 
     def ingest_to_db(str_record):
         print("Ingest to DB started")
 
         # Initialize the Connector for Google Cloud SQL
         connector = Connector()
-        db_conn = None
 
-        # Fix the record format if necessary
-        def fix_single_quotes(str_record):
-            # Replace Python-style booleans and None with their JSON equivalents
-            str_record = str_record.replace("None", "null")
-            str_record = str_record.replace("True", "true")
-            str_record = str_record.replace("False", "false")
-            # Use regex to replace single quotes with double quotes for JSON properties and values
-            str_record = re.sub(r"'", '"', str_record)
-            return str_record
-
-        # Fix the record format
-        str_record = fix_single_quotes(str_record)
-        print(f"Fixed record format: {str_record}")
-
-        # Load the JSON string properly
         try:
-            print(f"Starting JSON load.....")
+            # Load the JSON string
+            print(f"Raw string before JSON load: {str_record}")
+            # Replace single quotes with double quotes to make it valid JSON format
+            str_record = str_record.replace("'", '"')
+            # Replace Python None with JSON null
+            str_record = str_record.replace('None', 'null')
+            # Replace Python True/False with JSON true/false
+            str_record = str_record.replace('True', 'true')
+            str_record = str_record.replace('False', 'false')
             dict_record = json.loads(str_record)
-            dict_record['created_at'] = datetime.now()
-            print(f"Finished JSON treatment")
-        except json.JSONDecodeError as e:
-            logging.error(f"Error loading JSON: {e}")
-            logging.error(f"Invalid JSON string: {str_record}")
-            return  # Exit the function early if JSON is invalid
-        except Exception as e:
-            logging.error(f"Unexpected error: {e}")
-
-        # Rename '24hVolume' key to 'Volume24h' to match the database column
-        if '24hVolume' in dict_record:
-            dict_record['Volume24h'] = dict_record.pop('24hVolume')
-
-        # Convert string numbers to appropriate numeric types
-        dict_record['marketCap'] = int(dict_record['marketCap']) if dict_record.get('marketCap') else None
-        dict_record['price'] = float(dict_record['price']) if dict_record.get('price') else None
-        dict_record['btcPrice'] = float(dict_record['btcPrice']) if dict_record.get('btcPrice') else None
-        dict_record['Volume24h'] = int(dict_record['Volume24h']) if dict_record.get('Volume24h') else None
-        dict_record['change'] = float(dict_record['change']) if dict_record.get('change') else None
-        dict_record['lowVolume'] = bool(dict_record['lowVolume'])
-
-
-        # Convert lists to JSON strings
-        dict_record['sparkline'] = json.dumps(dict_record['sparkline']) if dict_record.get('sparkline') else None
-        dict_record['contractAddresses'] = json.dumps(dict_record['contractAddresses']) if dict_record.get('contractAddresses') else None
-
+            print(f"JSON loaded!: {dict_record}")
+            
+            print(f"Preparing Json....")
+                    # Convert 'date_added' and 'date_launched' to MySQL datetime format
+            if dict_record.get('date_added'):
+                dict_record['date_added'] = datetime.strptime(dict_record['date_added'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
         
+            if dict_record.get('date_launched'):
+                dict_record['date_launched'] = datetime.strptime(dict_record['date_launched'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
+            # Prepare the data (modify dict_record keys to match the columns)
+            dict_record = {
+                'id': dict_record['id'],
+                'name': dict_record['name'],
+                'symbol': dict_record['symbol'],
+                'category': dict_record['category'],
+                'description': dict_record['description'],
+                'slug': dict_record['slug'],
+                'logo': dict_record['logo'],
+                'subreddit': dict_record.get('subreddit', ''),
+                'notice': dict_record.get('notice', ''),
+                'tags': json.dumps(dict_record.get('tags', [])),
+                'tag_names': json.dumps(dict_record.get('tag-names', [])),
+                'tag_groups': json.dumps(dict_record.get('tag-groups', [])),
+                'website_url': dict_record['urls']['website'][0] if dict_record['urls']['website'] else None,
+                'twitter_url': dict_record['urls']['twitter'][0] if dict_record['urls']['twitter'] else None,
+                'message_board_url': dict_record['urls']['message_board'][0] if dict_record['urls']['message_board'] else None,
+                'chat_url': dict_record['urls']['chat'][0] if dict_record['urls']['chat'] else None,
+                'facebook_url': dict_record['urls']['facebook'][0] if dict_record['urls']['facebook'] else None,
+                'explorer_url': dict_record['urls']['explorer'][0] if dict_record['urls']['explorer'] else None,
+                'reddit_url': dict_record['urls']['reddit'][0] if dict_record['urls']['reddit'] else None,
+                'technical_doc_url': dict_record['urls']['technical_doc'][0] if dict_record['urls']['technical_doc'] else None,
+                'source_code_url': dict_record['urls']['source_code'][0] if dict_record['urls']['source_code'] else None,
+                'announcement_url': dict_record['urls']['announcement'][0] if dict_record['urls']['announcement'] else None,
+                'platform': dict_record.get('platform'),
+                'date_added': dict_record['date_added'],
+                'twitter_username': dict_record['twitter_username'],
+                'is_hidden': dict_record['is_hidden'],
+                'date_launched': dict_record['date_launched'],
+                'contract_address': json.dumps(dict_record.get('contract_address', [])),
+                'self_reported_circulating_supply': dict_record['self_reported_circulating_supply'],
+                'self_reported_tags': json.dumps(dict_record.get('self_reported_tags', [])),
+                'self_reported_market_cap': dict_record['self_reported_market_cap'],
+                'infinite_supply': dict_record['infinite_supply']
+            }
+            
+            print(f"Done!!!")
+            print(" ")
+            print(f"Json: {dict_record}")
 
-        try:
             # Function to get a connection to the Cloud SQL instance
             def getconn():
                 conn = connector.connect(
@@ -113,7 +116,7 @@ def write_to_database(cloud_event):
                 return conn
 
             # Create a connection pool with SQLAlchemy
-            pool = sqlalchemy.create_engine(
+            pool = create_engine(
                 "mysql+pymysql://",
                 creator=getconn,
             )
@@ -123,66 +126,42 @@ def write_to_database(cloud_event):
             with pool.connect() as db_conn:
                 print("Connected to the database")
 
-                # Create the coinranking table if it doesn't exist
-                create_table_query = """
-                    CREATE TABLE IF NOT EXISTS coinranking_data (
-                        id INT PRIMARY KEY AUTO_INCREMENT,
-                        uuid VARCHAR(255) NOT NULL,
-                        symbol VARCHAR(50),
-                        name VARCHAR(100),
-                        color VARCHAR(10),
-                        iconUrl VARCHAR(255),
-                        marketCap DECIMAL(36,18),
-                        price DECIMAL(36,18),
-                        listedAt INT,
-                        tier INT,
-                        `change` DECIMAL(10,2),
-                        `rank` INT,
-                        sparkline JSON,
-                        lowVolume BOOLEAN,
-                        coinrankingUrl VARCHAR(255),
-                        Volume24h DECIMAL(36,18),
-                        btcPrice DECIMAL(36,18),
-                        contractAddresses JSON,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """
-                db_conn.execute(text(create_table_query))
-                print("coinranking_data table created or already exists.")
-
-                # Write into Table
+                # Insert data into the coin_data table
                 insert_statement = """
-                INSERT INTO coinranking_data (
-                    uuid, symbol, name, color, iconUrl, marketCap, price, listedAt, tier,
-                    `change`, `rank`, sparkline, lowVolume, coinrankingUrl, Volume24h, btcPrice, created_at
+                INSERT INTO coin_data (
+                    id, name, symbol, category, description, slug, logo, subreddit, notice, 
+                    tags, tag_names, tag_groups, website_url, twitter_url, message_board_url, 
+                    chat_url, facebook_url, explorer_url, reddit_url, technical_doc_url, 
+                    source_code_url, announcement_url, platform, date_added, twitter_username, 
+                    is_hidden, date_launched, contract_address, self_reported_circulating_supply, 
+                    self_reported_tags, self_reported_market_cap, infinite_supply
                 ) VALUES (
-                    :uuid, :symbol, :name, :color, :iconUrl, :marketCap, :price, :listedAt, :tier,
-                    :change, :rank, :sparkline, :lowVolume, :coinrankingUrl, :Volume24h, :btcPrice, :created_at
+                    :id, :name, :symbol, :category, :description, :slug, :logo, :subreddit, :notice, 
+                    :tags, :tag_names, :tag_groups, :website_url, :twitter_url, :message_board_url, 
+                    :chat_url, :facebook_url, :explorer_url, :reddit_url, :technical_doc_url, 
+                    :source_code_url, :announcement_url, :platform, :date_added, :twitter_username, 
+                    :is_hidden, :date_launched, :contract_address, :self_reported_circulating_supply, 
+                    :self_reported_tags, :self_reported_market_cap, :infinite_supply
                 )
                 """
                 
-                
-                print(f"Dict before insertion in SQL: {dict_record}")
-                
-                
-                # Execute the insert statement with the provided dict_record
                 db_conn.execute(text(insert_statement), dict_record)
                 print("Data inserted successfully!")
-                db_conn.close()
-                print("Connector closed")
 
         except SQLAlchemyError as e:
             logging.exception(f"SQLAlchemy Error: {e}")
+        except json.JSONDecodeError as e:
+            logging.error(f"Error loading JSON: {e}")
+            logging.error(f"Invalid JSON string: {str_record}")
         except Exception as e:
-            logging.exception(f"Error: {e}")
-            
+            logging.exception(f"Unexpected error: {e}")
+    
     # get the message from the event that triggered this run
     t_record = base64.b64decode(cloud_event.data["message"]["data"])
     print(f"Raw Pub/Sub message: {cloud_event.data['message']['data']}")
 
-    
     # just make sure that it's formated as utf-8 string
-    str_record = str(t_record,'utf-8')
+    str_record = str(t_record, 'utf-8')
     print(f"Formatted message: {str_record}")
 
     # Start the ingestion process

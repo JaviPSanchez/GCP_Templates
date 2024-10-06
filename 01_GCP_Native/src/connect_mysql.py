@@ -25,7 +25,6 @@ DB_NAME = os.getenv("DB_NAME")
 
 # Instance connection name
 INSTANCE_CONNECTION_NAME = f"{PROJECT_ID}:{REGION}:{INSTANCE_NAME}"
-# print(f"Instance connection name: {INSTANCE_CONNECTION_NAME}")
 
 def ingest_to_db():
     print("Ingest to DB started")
@@ -71,35 +70,48 @@ def ingest_to_db():
                 
             # Create the coinranking table if it doesn't exist
             create_table_query = """
-                CREATE TABLE IF NOT EXISTS coinranking_data (
-                    id INT PRIMARY KEY AUTO_INCREMENT,
-                    uuid VARCHAR(255) NOT NULL,
-                    symbol VARCHAR(10) NOT NULL,
-                    name VARCHAR(255) NOT NULL,
-                    color VARCHAR(7),
-                    iconUrl VARCHAR(255),
-                    marketCap BIGINT,
-                    price DECIMAL(30, 10),
-                    listedAt BIGINT,
-                    tier INT,
-                    `change` DECIMAL(5, 2),
-                    `rank` INT,
-                    sparkline JSON,
-                    lowVolume BOOLEAN,
-                    coinrankingUrl VARCHAR(255),
-                    volume_24h BIGINT,
-                    btcPrice DECIMAL(18, 10),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                CREATE TABLE IF NOT EXISTS coin_data (
+                    id INT PRIMARY KEY,
+                    name VARCHAR(255),
+                    symbol VARCHAR(10),
+                    category VARCHAR(50),
+                    description TEXT,
+                    slug VARCHAR(100),
+                    logo VARCHAR(255),
+                    subreddit VARCHAR(255),
+                    notice VARCHAR(255),
+                    tags JSON,
+                    tag_names JSON,
+                    tag_groups JSON,
+                    website_url VARCHAR(255),
+                    twitter_url VARCHAR(255),
+                    message_board_url VARCHAR(255),
+                    chat_url VARCHAR(255),
+                    facebook_url VARCHAR(255),
+                    explorer_url VARCHAR(255),
+                    reddit_url VARCHAR(255),
+                    technical_doc_url VARCHAR(255),
+                    source_code_url VARCHAR(255),
+                    announcement_url VARCHAR(255),
+                    platform VARCHAR(100),
+                    date_added DATETIME,
+                    twitter_username VARCHAR(255),
+                    is_hidden BOOLEAN,
+                    date_launched DATETIME,
+                    contract_address JSON,
+                    self_reported_circulating_supply DECIMAL(20, 10),
+                    self_reported_tags JSON,
+                    self_reported_market_cap DECIMAL(20, 10),
+                    infinite_supply BOOLEAN
                 );
             """
             db_conn.execute(text(create_table_query))
-            print("coinranking_data table created or already exists.")
+            print("coin_data table created or already exists.")
             
             
             # Execute a query to fetch all rows from the coinranking_data table
-            result = db_conn.execute(text("SELECT * FROM coinranking_db.coinranking_data;"))
-            logging.info("Fetching data from coinranking_data...")
-            print("Fetching data from coinranking_data...")
+            result = db_conn.execute(text("SELECT * FROM coin_db.coin_data;"))
+            print("Fetching data from coin_data...")
 
             # Fetch all results
             rows = result.fetchall()
