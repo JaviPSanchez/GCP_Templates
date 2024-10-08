@@ -15,7 +15,7 @@ from google.cloud.sql.connector import Connector
 print("Done!!!")
 
 # Load environment variables from .env file
-load_dotenv(".env.local")
+load_dotenv("./assets/.env.local")
 
 # Google Cloud SQL connection information
 PROJECT_ID = os.getenv("PROJECT_ID")
@@ -63,6 +63,8 @@ def write_to_database(cloud_event):
             print("------------------------------")
             
             print(f"Preparing Json....")
+            
+            # TODO: Pydantyc schema validation
             
             status = dict_record["status"]["timestamp"]
             status = datetime.strptime(status, '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')

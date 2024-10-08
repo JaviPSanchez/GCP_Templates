@@ -7,10 +7,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv(".env.local")
+load_dotenv("./assets/.env.local")
 
 # Set the environment variable for Google Application Credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./key_access_sql.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./assets/key_access_sql.json"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)  # You can change this to DEBUG for more detailed logs
