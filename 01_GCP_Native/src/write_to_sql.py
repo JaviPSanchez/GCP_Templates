@@ -2,14 +2,16 @@ print("Loading Libraries....")
 import os
 import logging
 import base64
-import sqlalchemy
 import json
 from datetime import datetime
-from sqlalchemy import create_engine, text
-from google.cloud.sql.connector import Connector
-from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
+# ORM
+import sqlalchemy
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
+# Google Cloud Services
 import functions_framework
+from google.cloud.sql.connector import Connector
 print("Done!!!")
 
 # Load environment variables from .env file
@@ -146,8 +148,13 @@ def write_to_database(cloud_event):
                 """
                 
                 db_conn.execute(text(insert_statement), dict_record)
-                print("Data inserted successfully!")
+                
+                # Commit the transaction to ensure changes are saved in DB
+                db_conn.commit()
 
+                print("Data inserted successfully!")
+                
+                
         except SQLAlchemyError as e:
             logging.exception(f"SQLAlchemy Error: {e}")
         except json.JSONDecodeError as e:

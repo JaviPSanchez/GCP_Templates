@@ -69,9 +69,10 @@ def ingest_to_db():
                 print(f"Database: {db[0]}")
                 
             # Create the coinranking table if it doesn't exist
-            create_table_query = """
+            create_table_coin_data = """
                 CREATE TABLE IF NOT EXISTS coin_data (
-                    id INT PRIMARY KEY,
+                    auto_id INT PRIMARY KEY AUTO_INCREMENT,
+                    id INT,
                     name VARCHAR(255),
                     symbol VARCHAR(10),
                     category VARCHAR(50),
@@ -105,20 +106,60 @@ def ingest_to_db():
                     infinite_supply BOOLEAN
                 );
             """
-            db_conn.execute(text(create_table_query))
+            db_conn.execute(text(create_table_coin_data))
             print("coin_data table created or already exists.")
+            
+            # Create the coinranking table if it doesn't exist
+            create_table_coin_cryptos = """
+            CREATE TABLE IF NOT EXISTS coin_cryptos (
+                auto_id INT PRIMARY KEY AUTO_INCREMENT,
+                status DATETIME,
+                id INT,
+                name VARCHAR(255),
+                symbol VARCHAR(10),
+                slug VARCHAR(100),
+                num_market_pairs INT,
+                date_added DATETIME,
+                tags JSON,
+                max_supply BIGINT,
+                circulating_supply BIGINT,
+                total_supply BIGINT,
+                infinite_supply BOOLEAN,
+                platform VARCHAR(255),
+                cmc_rank INT,
+                self_reported_circulating_supply DECIMAL(20, 10) NULL,
+                self_reported_market_cap DECIMAL(20, 10) NULL,
+                tvl_ratio DECIMAL(20, 10) NULL,
+                last_updated DATETIME,
+                price DECIMAL(20, 10) NULL,
+                volume_24h DECIMAL(30, 10) NULL,
+                volume_change_24h DECIMAL(30, 10) NULL,
+                percent_change_1h DECIMAL(30, 10) NULL,
+                percent_change_24h DECIMAL(30, 10) NULL,
+                percent_change_7d DECIMAL(30, 10) NULL,
+                percent_change_30d DECIMAL(30, 10) NULL,
+                percent_change_60d DECIMAL(30, 10) NULL,
+                percent_change_90d DECIMAL(30, 10) NULL,
+                market_cap DECIMAL(30, 10) NULL,
+                market_cap_dominance DECIMAL(5, 2) NULL,
+                fully_diluted_market_cap DECIMAL(30, 10) NULL,
+                tvl DECIMAL(30, 10) NULL
+            );
+            """
+            db_conn.execute(text(create_table_coin_cryptos))
+            print("table coin_cryptos created or already exists.")
             
             
             # Execute a query to fetch all rows from the coinranking_data table
-            result = db_conn.execute(text("SELECT * FROM coin_db.coin_data;"))
-            print("Fetching data from coin_data...")
+            # result = db_conn.execute(text("SELECT * FROM coin_db.coin_data;"))
+            # print("Fetching data from coin_data...")
 
             # Fetch all results
-            rows = result.fetchall()
+            # rows = result.fetchall()
 
             # Print out the rows
-            for row in rows:
-                print(row)
+            # for row in rows:
+            #     print(row)
             
     except SQLAlchemyError as e:
         print(f"SQLAlchemy error occurred: {str(e)}")
