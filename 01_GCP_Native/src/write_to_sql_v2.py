@@ -67,6 +67,7 @@ def write_to_database(cloud_event):
             status = dict_record["status"]["timestamp"]
             status = datetime.strptime(status, '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
             print(f"Status: {status}")
+            # We take the first item of the Data object: Bitcoin
             data = dict_record["data"][0]
             print(f"Data: {data}")
             
