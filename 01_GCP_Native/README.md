@@ -12,6 +12,7 @@
 8.  Grafana
 9.  VPC Network
 10. IAM & Admin
+11. Logging
 
 After the creation of the Compute Engine with Mysql we want to connect directly from our local
 environment, in this case Visual Studio Code. We will need permissions
