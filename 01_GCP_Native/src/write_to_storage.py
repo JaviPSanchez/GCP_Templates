@@ -5,6 +5,7 @@ import json
 from dotenv import load_dotenv
 from google.cloud import storage
 import functions_framework
+from loguru import logger
 print("Done!!!")
 
 # Load environment variables from .env file
