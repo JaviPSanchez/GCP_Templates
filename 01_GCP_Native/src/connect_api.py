@@ -51,7 +51,10 @@ def pull_from_api(event, context):
     
     # Pretty-print JSON data for better readability in logs
     pretty_json = json.dumps(data_json["data"][0], indent=4)
+    # Local
     logger.debug(f"Json Data:\n{pretty_json}")
+    # Production
+    # logger.debug(f"Json Data: {data_json}")
 
     # Ensure data_json was successfully retrieved
     if data_json:

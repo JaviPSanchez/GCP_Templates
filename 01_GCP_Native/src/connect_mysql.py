@@ -1,10 +1,15 @@
 import os
-import logging
 import sqlalchemy
 from sqlalchemy import create_engine, text
 from google.cloud.sql.connector import Connector
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
+# Custom Logging
+from loguru import logger
+from logging_config import configure_logger
+
+# Configure logging
+configure_logger()
 
 # Load environment variables from .env file
 load_dotenv("./assets/.env.local")
@@ -12,9 +17,8 @@ load_dotenv("./assets/.env.local")
 # Set the environment variable for Google Application Credentials
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./assets/key_access_sql.json"
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)  # You can change this to DEBUG for more detailed logs
-
+# Environment variables
+logger.debug("Attempting to load environment variables!")
 # Google Cloud SQL connection information
 PROJECT_ID = os.getenv("PROJECT_ID")
 REGION = os.getenv("REGION")
@@ -22,12 +26,18 @@ INSTANCE_NAME = os.getenv("INSTANCE_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_NAME = os.getenv("DB_NAME")
+logger.debug("Done loading environment variables!")
 
 # Instance connection name
 INSTANCE_CONNECTION_NAME = f"{PROJECT_ID}:{REGION}:{INSTANCE_NAME}"
 
+# Raise an error if critical environment variables are missing
+if not PROJECT_ID or not REGION or not INSTANCE_NAME or not DB_USER or not DB_PASS or not DB_NAME:
+    logger.critical("Critical environment variables are missing! Exiting program.")
+    raise EnvironmentError("Environment variables must be set.")
+
 def ingest_to_db():
-    print("Ingest to DB started")
+    logger.info("Ingest to DB started")
 
     # Initialize the Connector for Google Cloud SQL
     connector = Connector()
@@ -43,8 +53,7 @@ def ingest_to_db():
                 password=DB_PASS,
                 db=DB_NAME,
             )
-            logging.info(f"Connecting to instance: {INSTANCE_CONNECTION_NAME}")
-            print(f"Connecting to instance: {INSTANCE_CONNECTION_NAME}")
+            logger.info(f"Connecting to instance: {INSTANCE_CONNECTION_NAME}")
             return conn
 
         # Create a connection pool with SQLAlchemy
@@ -52,23 +61,22 @@ def ingest_to_db():
             "mysql+pymysql://",
             creator=getconn,
         )
-        print("Connection pool created")
+        logger.info("Connection pool created")
 
         # Connect to the connection pool and execute queries
         with pool.connect() as db_conn:
-            print("Connected to the database")
+            logger.info("Connected to the database")
 
             # Execute a sample query to show databases and assign result
             result = db_conn.execute(text("SHOW DATABASES;"))
-            logging.info("Showing Databases...")
-            print("Showing Databases...")
+            logger.info("Showing Databases...")
 
             # Fetch and display the databases
             databases = result.fetchall()
             for db in databases:
-                print(f"Database: {db[0]}")
+                logger.debug(f"Database: {db[0]}")
                 
-            # Create the coinranking table if it doesn't exist
+            # Create the coin_data table if it doesn't exist
             create_table_coin_data = """
                 CREATE TABLE IF NOT EXISTS coin_data (
                     auto_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -107,9 +115,9 @@ def ingest_to_db():
                 );
             """
             db_conn.execute(text(create_table_coin_data))
-            print("coin_data table created or already exists.")
+            logger.info("coin_data table created or already exists.")
             
-            # Create the coinranking table if it doesn't exist
+            # Create the coin_cryptos table if it doesn't exist
             create_table_coin_cryptos = """
             CREATE TABLE IF NOT EXISTS coin_cryptos (
                 auto_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -147,38 +155,24 @@ def ingest_to_db():
             );
             """
             db_conn.execute(text(create_table_coin_cryptos))
-            print("table coin_cryptos created or already exists.")
-            
-            
-            # Execute a query to fetch all rows from the coinranking_data table
-            # result = db_conn.execute(text("SELECT * FROM coin_db.coin_data;"))
-            # print("Fetching data from coin_data...")
-
-            # Fetch all results
-            # rows = result.fetchall()
-
-            # Print out the rows
-            # for row in rows:
-            #     print(row)
+            logger.info("table coin_cryptos created or already exists.")
             
     except SQLAlchemyError as e:
-        print(f"SQLAlchemy error occurred: {str(e)}")
-        logging.error(f"SQLAlchemy Error: {str(e)}")
+        logger.error(f"SQLAlchemy error occurred: {str(e)}")
 
     except Exception as e:
-        print(f"General error occurred: {str(e)}")
-        logging.error(f"Error: {str(e)}")
+        logger.error(f"General error occurred: {str(e)}")
 
     finally:
         # Ensure db_conn is closed if it was opened
         if db_conn is not None:
             db_conn.close()
-            print("Database connection closed")
+            logger.info("Database connection closed")
 
         # Properly close the connector to prevent aiohttp errors
         connector.close()
-        print("Connector closed")
+        logger.info("Connector closed")
 
 # Start the ingestion process
 ingest_to_db()
-print("Ingest to DB function completed")
+logger.info("Ingest to DB function completed")

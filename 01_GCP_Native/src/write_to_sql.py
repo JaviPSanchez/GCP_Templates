@@ -1,4 +1,3 @@
-print("Loading Libraries....")
 import os
 import logging
 import base64
@@ -12,75 +11,75 @@ from sqlalchemy.exc import SQLAlchemyError
 # Google Cloud Services
 import functions_framework
 from google.cloud.sql.connector import Connector
-print("Done!!!")
+# Custom Logging
+from loguru import logger
+from logging_config import configure_logger
 
-# Load environment variables from .env file
-load_dotenv("./assets/.env.local")
+# Configure logging
+configure_logger()
 
-# Google Cloud SQL connection information
+# Local Development
+# load_dotenv("./secrets/.env.local")
+# Production
+load_dotenv(".env.local")
+
+# Environment variables
+logger.debug("Attempting to load environment variables!")
 PROJECT_ID = os.getenv("PROJECT_ID")
 REGION = os.getenv("REGION")
 INSTANCE_NAME = os.getenv("INSTANCE_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_NAME = os.getenv("DB_NAME")
+logger.debug("Done loading environment variables!")
 
 # Instance connection name to connect to DB
 INSTANCE_CONNECTION_NAME = f"{PROJECT_ID}:{REGION}:{INSTANCE_NAME}"
 
+# Raise an error if critical environment variables are missing
+if not PROJECT_ID or not REGION or not INSTANCE_NAME or not DB_USER or not DB_PASS or not DB_NAME:
+    logger.critical("Critical environment variables are missing! Exiting program.")
+    raise EnvironmentError("Environment variables must be set.")
+
 # Triggered from a message on a Cloud Pub/Sub topic.
 @functions_framework.cloud_event
 def write_to_database(cloud_event):
-    """Cloud_event object, which is supposed to be passed in by the
-    Google Cloud Functions framework when an event is triggered.
+    """Triggered by Cloud Pub/Sub and writes data to the database.
 
     Args:
-        cloud_event (Object):
+        cloud_event (CloudEvent): Event containing data to be processed.
     """
-    print(f"Cloud Event: {cloud_event}")
+    logger.info("Cloud event triggered.")
+    logger.debug(f"Cloud Event: {cloud_event}")
 
     def ingest_to_db(str_record):
-        print("Ingest to DB started")
+        logger.info("Ingest to DB started")
 
         # Initialize the Connector for Google Cloud SQL
         connector = Connector()
 
         try:
             # Load the JSON string
-            print("------------------------------")
-            print(f"Raw string before JSON load: {str_record}")
-            print("------------------------------")
-            # Replace single quotes with double quotes to make it valid JSON format
-            # str_record = str_record.replace("'", '"')
-            # Replace Python None with JSON null
-            # str_record = str_record.replace('None', 'null')
-            # Replace Python True/False with JSON true/false
-            # str_record = str_record.replace('True', 'true')
-            # str_record = str_record.replace('False', 'false')
+            logger.debug(f"Raw string before JSON load: {str_record}")
             dict_record = json.loads(str_record)
-            print("------------------------------")
-            print(f"JSON loaded!: {dict_record}")
-            print("------------------------------")
-            
-            print(f"Preparing Json....")
-            
-            # TODO: Pydantyc schema validation
-            
+            logger.debug(f"JSON loaded: {dict_record}")
+
+            # Parse and format the data
             status = dict_record["status"]["timestamp"]
             status = datetime.strptime(status, '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
-            print(f"Status: {status}")
-            # We take the first item of the Data object: Bitcoin
+            logger.debug(f"Status: {status}")
+
             data = dict_record["data"][0]
-            print(f"Data: {data}")
-            
+            logger.debug(f"Data: {data}")
+
             # Convert 'date_added' and 'last_updated' to MySQL datetime format
             if data.get('date_added'):
                 data['date_added'] = datetime.strptime(data['date_added'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
         
             if data.get('last_updated'):
                 data['last_updated'] = datetime.strptime(data['last_updated'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
-            
-            # Prepare the data (modify dict_record keys to match the columns)
+
+            # Prepare the data for insertion
             dict_record = {
                 'status': status,
                 'id': data['id'],
@@ -115,9 +114,7 @@ def write_to_database(cloud_event):
                 'tvl': data['quote']['USD']['tvl']
             }
             
-            print(f"Done!!!")
-            print("----------------------------------------------------")
-            print(f"Json: {dict_record}")
+            logger.debug(f"Prepared data for insertion: {dict_record}")
 
             # Function to get a connection to the Cloud SQL instance
             def getconn():
@@ -128,7 +125,7 @@ def write_to_database(cloud_event):
                     password=DB_PASS,
                     db=DB_NAME,
                 )
-                print(f"Connecting to instance: {INSTANCE_CONNECTION_NAME}")
+                logger.info(f"Connecting to instance: {INSTANCE_CONNECTION_NAME}")
                 return conn
 
             # Create a connection pool with SQLAlchemy
@@ -136,12 +133,11 @@ def write_to_database(cloud_event):
                 "mysql+pymysql://",
                 creator=getconn,
             )
-            print("Connection pool created")
-
+            logger.info("Connection pool created")
 
             # Connect to the connection pool and execute queries
             with pool.connect() as db_conn:
-                print("Connected to the database")
+                logger.info("Connected to the database")
 
                 # Insert data into the coin_cryptos table
                 insert_statement = """
@@ -163,29 +159,27 @@ def write_to_database(cloud_event):
                 """
                 
                 db_conn.execute(text(insert_statement), dict_record)
-                
-                # Commit the transaction to ensure changes are saved in DB
-                db_conn.commit()
+                db_conn.commit()  # Commit the transaction
 
-                print("Data inserted successfully!")
-                
+                logger.info("Data inserted successfully!")
+
         except SQLAlchemyError as e:
-            logging.exception(f"SQLAlchemy Error: {e}")
+            logger.exception(f"SQLAlchemy Error: {e}")
         except json.JSONDecodeError as e:
-            logging.error(f"Error loading JSON: {e}")
-            logging.error(f"Invalid JSON string: {str_record}")
+            logger.error(f"Error loading JSON: {e}")
+            logger.error(f"Invalid JSON string: {str_record}")
         except Exception as e:
-            logging.exception(f"Unexpected error: {e}")
+            logger.exception(f"Unexpected error: {e}")
     
     # Get the message from the event that triggered this run
     t_record = base64.b64decode(cloud_event.data["message"]["data"])
-    print(f"Raw Pub/Sub message: {cloud_event.data['message']['data']}")
+    logger.debug(f"Raw Pub/Sub message: {cloud_event.data['message']['data']}")
 
     # Make sure that it's formatted as a UTF-8 string
     str_record = str(t_record, 'utf-8')
-    print(f"Formatted message: {str_record}")
+    logger.debug(f"Formatted message: {str_record}")
 
     # Start the ingestion process
     ingest_to_db(str_record)
-    print("Ingest to DB function completed")
+    logger.info("Ingest to DB function completed")
 

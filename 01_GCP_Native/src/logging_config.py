@@ -5,8 +5,8 @@ def configure_logger():
     # Remove the default handler first
     logger.remove()
 
-    # Add a file handler
-    logger.add("./logs/{time:YYYY-MM-DD at HH-mm-ss}.log", format="{level} {message}", level="DEBUG")
+    # Add a file handler (Avoid to load in cloud functions environment!!!)
+    # logger.add("./logs/{time:YYYY-MM-DD at HH-mm-ss}.log", format="{level} {message}", level="DEBUG")
 
     # Add console handler
     logger.add(sys.stdout, format="{level} - Line {line}: {message}", level="DEBUG")
