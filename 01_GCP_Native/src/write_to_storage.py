@@ -14,8 +14,7 @@ configure_logger()
 
 # Local Development
 load_dotenv("./secrets/.env.local")
-# Production
-# load_dotenv(".env.local")
+
 
 # Environment variables
 logger.debug("Attempting to load environment variables!")

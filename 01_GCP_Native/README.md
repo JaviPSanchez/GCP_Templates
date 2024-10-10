@@ -1,10 +1,8 @@
 # GCP Native Project Pipeline
 
-![Image](../assets/gcp-native.png "GCP Professional Engineer Projects")
-
 Welcome to the **GCP Native Project Templates** repository! This project demonstrates how to set up a fully native GCP pipeline using various Google Cloud services to build a robust, scalable data platform. The project leverages a combination of GCP services to integrate data, process it, and visualize insights effectively.
 
-In this project, we implement two different types of pipelines: OLTP (Online Transaction Processing) and OLAP (Online Analytical Processing). Each serves a specific purpose in managing and processing data within the system
+![Image](../assets/gcp-native.png "GCP Professional Engineer Projects")
 
 ## Services Used
 
@@ -20,7 +18,7 @@ In this project, we implement two different types of pipelines: OLTP (Online Tra
 4. **Cloud SQL**  
    Managed relational database service using MySQL.
 
-5. **Looker Studio**  
+5. **Looker Studio**
    Data visualization and reporting for creating real-time dashboards.
 
 6. **Cloud Storage**  
@@ -29,8 +27,8 @@ In this project, we implement two different types of pipelines: OLTP (Online Tra
 7. **BigQuery**  
    Fully managed data warehouse for analytics.
 
-8. **Grafana**  
-   Monitoring and observability dashboard for data visualization.
+8. **Looker Studio**
+   Previously known as Google Data Studio, is a powerful data visualization and business intelligence tool
 
 9. **VPC Network**  
    Isolated network infrastructure for managing resources securely.
@@ -41,21 +39,67 @@ In this project, we implement two different types of pipelines: OLTP (Online Tra
 11. **Logging**  
     Centralized logging using Google Cloud Logging for monitoring application performance.
 
-## Project Overview
+12. **Monitoring**  
+    Provides powerful tools for tracking the performance, health, and reliability of your applications and infrastructure
 
-This project focuses on building a data pipeline using **Cloud Functions**, **Cloud SQL**, and other GCP services. We aim to connect and orchestrate services to ingest, store, and visualize data using modern, serverless technologies.
+## Key Features
 
-### Key Features
-
-- **Automated Scheduling**: Use Cloud Scheduler to automate data ingestion and processing.
+- **Automated Scheduling**: Use Cloud Scheduler to automate data ingestion and processing, for this project each minute!
 - **Real-time Processing**: Cloud Pub/Sub and Cloud Functions enable real-time data processing workflows.
 - **Scalable Database**: Cloud SQL serves as the core relational database for data storage.
 - **Data Visualization**: Visualize results with Looker Studio and Grafana.
 - **Logging and Monitoring**: Implement robust logging and monitoring practices with Cloud Logging and Grafana.
 
+## Project Overview
+
+This project focuses on building a data pipeline using **Cloud Functions**, **Cloud SQL**, and other GCP services. We aim to connect and orchestrate services to ingest, store, and visualize data using modern, serverless technologies.
+
+In this project, we use two types of pipelines: OLTP (Online Transaction Processing) and OLAP (Online Analytical Processing), both of which play crucial roles in handling and processing cryptocurrency data obtained from the CoinMarketCap API.
+
+The API provides real-time data on cryptocurrency market conditions, such as price, market cap, and volume for coins like Bitcoin. Our pipelines are designed to process this data for both transactional needs and analytics.
+
+### OLTP Pipeline
+
+The OLTP pipeline handles real-time cryptocurrency data from the CoinMarketCap API. It ingests the latest prices, market volume, and supply information and stores them for immediate use in transactional systems.
+
+Key features of the OLTP pipeline include:
+
+Real-time updates: Fetches live data from the API, such as Bitcoin's price, volume, and market cap.
+Transactional integrity: Ensures that incoming data is quickly and accurately stored for operational use.
+Cloud SQL: Used as the relational database to store the real-time data, enabling fast updates and low-latency reads.
+For example, in the OLTP pipeline, data like the current price of Bitcoin ($63,611) and its market cap ($1.26 trillion) are stored in Cloud SQL and updated frequently. This data can be used in applications that require up-to-the-minute information on market conditions.
+
+Key components of the OLTP pipeline:
+
+Cloud Scheduler: Triggers API calls to fetch cryptocurrency data at scheduled intervals.
+Cloud Pub/Sub: Acts as the message broker to deliver the fetched data to the database.
+Cloud Functions: Event-driven functions process and store the data into Cloud SQL.
+Cloud SQL: Stores transactional data like current prices, market volumes, and supply numbers.
+
+### OLAP Pipeline
+
+The OLAP pipeline is designed for batch processing and analytics. It takes the cryptocurrency data stored in Cloud SQL and processes it in bulk for advanced insights, historical analysis, and business intelligence reporting.
+
+Key features of the OLAP pipeline include:
+
+Historical data analysis: Aggregates and processes historical market data, such as trends over the past 30, 60, and 90 days.
+Complex queries: Used to calculate long-term trends, market dominance, and performance metrics over time.
+BigQuery: As the data warehouse, it allows for fast querying and processing of large datasets, such as the change in Bitcoin's price over 90 days (+11.38%).
+For example, in the OLAP pipeline, data such as the percent change in Bitcoin price over 1 hour (-0.11%) or 30 days (+17.24%) is analyzed to provide insights into market trends. The data is then visualized using Looker Studio for real-time and historical analysis.
+
+Key components of the OLAP pipeline:
+
+Cloud Storage: Stores historical market data for processing.
+BigQuery: Performs large-scale analytical queries to track trends, such as market cap dominance and price fluctuations over different time frames.
+Looker Studio: Used to build dashboards for monitoring the state of the cryptocurrency market, helping visualize both real-time data and historical trends.
+Example Use Cases
+OLTP: Use the OLTP pipeline to update your application with the latest cryptocurrency prices, volumes, and supply from the CoinMarketCap API. This allows users to view real-time market data such as the Bitcoin price and market cap.
+
+OLAP: Use the OLAP pipeline to generate reports and dashboards showing historical trends. For instance, users can analyze the percent change in Bitcoin price over 7 days (-1.38%) or compare it against other cryptocurrencies for long-term investment strategies.
+
 ## Connecting Cloud SQL to Local Environment
 
-After setting up **Cloud SQL** (MySQL) on a **Compute Engine**, you may want to connect from your local environment (e.g., Visual Studio Code). Follow the steps below to configure the required permissions.
+After setting up **Cloud SQL** (MySQL) on a **Compute Engine**, you may want to connect from your predilected IDE, in my case the most common one: Visual Studio Code. Follow the steps below to configure the required permissions.
 
 ### Steps to Set Up Permissions
 
@@ -99,7 +143,7 @@ Make sure your GCP project is linked to an active billing account to avoid any r
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/JaviPSanchez/GCP_Templates.git
+   git clone -b 01-GCP-Native https://github.com/JaviPSanchez/GCP_Templates.git .
    ```
 2. Navigate to the specific project directory:
 
