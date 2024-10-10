@@ -2,12 +2,15 @@
 
 ![Image](../assets/gcp-native.png "GCP Professional Engineer Projects")
 
-Welcome to the **GCP Native Project Templates** repository! This project demonstrates how to set up a fully native GCP environment using various Google Cloud services to build a robust, scalable data platform. The project leverages a combination of GCP services to integrate data, process it, and visualize insights effectively.
+Welcome to the **GCP Native Project Templates** repository! This project demonstrates how to set up a fully native GCP pipeline using various Google Cloud services to build a robust, scalable data platform. The project leverages a combination of GCP services to integrate data, process it, and visualize insights effectively.
+
+In this project, we implement two different types of pipelines: OLTP (Online Transaction Processing) and OLAP (Online Analytical Processing). Each serves a specific purpose in managing and processing data within the system
 
 ## Services Used
 
 1. **Cloud Scheduler**  
    Trigger and manage scheduled jobs for automation.
+
 2. **Cloud Pub/Sub**  
    Message queue for real-time data integration.
 
