@@ -28,7 +28,7 @@ Welcome to the **GCP Native Project Templates** repository! This project demonst
    Fully managed data warehouse for analytics.
 
 8. **Looker Studio**
-   Previously known as Google Data Studio, is a powerful data visualization and business intelligence tool
+   Previously known as Google Data Studio, is a powerful data visualization and business intelligence tool.
 
 9. **VPC Network**  
    Isolated network infrastructure for managing resources securely.
