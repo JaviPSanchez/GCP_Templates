@@ -1,6 +1,7 @@
 01_GCP_Native/src/secrets/.env.local
 01_GCP_Native/venv
 01_GCP_Native/src/secrets/*.json
-01_GCP_Native/src/secrets/*.ipynb
-01_GCP_Native/src/secrets/*.txt
+01_GCP_Native/src/assets/*.ipynb
+01_GCP_Native/src/assets/*.txt
+01_GCP_Native/src/assets/*.json
 assets/*.excalidraw

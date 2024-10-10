@@ -13,15 +13,15 @@ import functions_framework
 from google.cloud.sql.connector import Connector
 # Custom Logging
 from loguru import logger
-from logging_config import configure_logger
+from .logging_config import configure_logger
+# Import the Pydantic schema
+from .schemas import Record
 
 # Configure logging
 configure_logger()
 
 # Local Development
-# load_dotenv("./secrets/.env.local")
-# Production
-load_dotenv(".env.local")
+load_dotenv("./secrets/.env.local")
 
 # Environment variables
 logger.debug("Attempting to load environment variables!")
@@ -63,11 +63,19 @@ def write_to_database(cloud_event):
             logger.debug(f"Raw string before JSON load: {str_record}")
             dict_record = json.loads(str_record)
             logger.debug(f"JSON loaded: {dict_record}")
+            
+            
+            # Validate data using Pydantic schema
+            record = Record(**dict_record)
+            logger.debug(f"Validated record: {record}")
+            
+            status = record.status.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            data = record.data[0]
 
             # Parse and format the data
-            status = dict_record["status"]["timestamp"]
-            status = datetime.strptime(status, '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
-            logger.debug(f"Status: {status}")
+            # status = dict_record["status"]["timestamp"]
+            # status = datetime.strptime(status, '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
+            # logger.debug(f"Status: {status}")
 
             data = dict_record["data"][0]
             logger.debug(f"Data: {data}")
