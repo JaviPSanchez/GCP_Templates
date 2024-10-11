@@ -3,6 +3,7 @@ import logging
 import base64
 import json
 from datetime import datetime
+from datetime import timedelta
 from dotenv import load_dotenv
 # ORM
 import sqlalchemy
@@ -63,66 +64,14 @@ def write_to_database(cloud_event):
             logger.debug(f"Raw string before JSON load: {str_record}")
             dict_record = json.loads(str_record)
             logger.debug(f"JSON loaded: {dict_record}")
-            
-            
+
             # Validate data using Pydantic schema
             record = Record(**dict_record)
             logger.debug(f"Validated record: {record}")
-            
-            status = record.status.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-            data = record.data[0]
 
-            # Parse and format the data
-            # status = dict_record["status"]["timestamp"]
-            # status = datetime.strptime(status, '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
-            # logger.debug(f"Status: {status}")
-
-            data = dict_record["data"][0]
-            logger.debug(f"Data: {data}")
-
-            # Convert 'date_added' and 'last_updated' to MySQL datetime format
-            if data.get('date_added'):
-                data['date_added'] = datetime.strptime(data['date_added'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
-        
-            if data.get('last_updated'):
-                data['last_updated'] = datetime.strptime(data['last_updated'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%Y-%m-%d %H:%M:%S')
-
-            # Prepare the data for insertion
-            dict_record = {
-                'status': status,
-                'id': data['id'],
-                'name': data['name'],
-                'symbol': data['symbol'],
-                'slug': data['slug'],
-                'num_market_pairs': data['num_market_pairs'],
-                'date_added': data['date_added'],
-                'tags': json.dumps(data['tags']),
-                'max_supply': data['max_supply'],
-                'circulating_supply': data['circulating_supply'],
-                'total_supply': data['total_supply'],
-                'infinite_supply': data['infinite_supply'],
-                'platform': data.get('platform'),
-                'cmc_rank': data['cmc_rank'],
-                'self_reported_circulating_supply': data['self_reported_circulating_supply'],
-                'self_reported_market_cap': data['self_reported_market_cap'],
-                'tvl_ratio': data['tvl_ratio'],
-                'last_updated': data['last_updated'],
-                'price': data['quote']['USD']['price'],
-                'volume_24h': data['quote']['USD']['volume_24h'],
-                'volume_change_24h': data['quote']['USD']['volume_change_24h'],
-                'percent_change_1h': data['quote']['USD']['percent_change_1h'],
-                'percent_change_24h': data['quote']['USD']['percent_change_24h'],
-                'percent_change_7d': data['quote']['USD']['percent_change_7d'],
-                'percent_change_30d': data['quote']['USD']['percent_change_30d'],
-                'percent_change_60d': data['quote']['USD']['percent_change_60d'],
-                'percent_change_90d': data['quote']['USD']['percent_change_90d'],
-                'market_cap': data['quote']['USD']['market_cap'],
-                'market_cap_dominance': data['quote']['USD']['market_cap_dominance'],
-                'fully_diluted_market_cap': data['quote']['USD']['fully_diluted_market_cap'],
-                'tvl': data['quote']['USD']['tvl']
-            }
-            
-            logger.debug(f"Prepared data for insertion: {dict_record}")
+            # Convert the timestamp to UTC+2 using a fixed offset
+            utc_plus_2 = record.status.timestamp + timedelta(hours=2)
+            status = utc_plus_2.strftime('%Y-%m-%d %H:%M:%S')
 
             # Function to get a connection to the Cloud SQL instance
             def getconn():
@@ -143,33 +92,69 @@ def write_to_database(cloud_event):
             )
             logger.info("Connection pool created")
 
-            # Connect to the connection pool and execute queries
+            # Connect to the connection pool
             with pool.connect() as db_conn:
                 logger.info("Connected to the database")
 
-                # Insert data into the coin_cryptos table
-                insert_statement = """
-                INSERT INTO coin_cryptos (
-                    status, id, name, symbol, slug, num_market_pairs, date_added, tags, max_supply,
-                    circulating_supply, total_supply, infinite_supply, platform, cmc_rank,
-                    self_reported_circulating_supply, self_reported_market_cap, tvl_ratio, last_updated,
-                    price, volume_24h, volume_change_24h, percent_change_1h, percent_change_24h,
-                    percent_change_7d, percent_change_30d, percent_change_60d, percent_change_90d,
-                    market_cap, market_cap_dominance, fully_diluted_market_cap, tvl
-                ) VALUES (
-                    :status, :id, :name, :symbol, :slug, :num_market_pairs, :date_added, :tags, :max_supply,
-                    :circulating_supply, :total_supply, :infinite_supply, :platform, :cmc_rank,
-                    :self_reported_circulating_supply, :self_reported_market_cap, :tvl_ratio, :last_updated,
-                    :price, :volume_24h, :volume_change_24h, :percent_change_1h, :percent_change_24h,
-                    :percent_change_7d, :percent_change_30d, :percent_change_60d, :percent_change_90d,
-                    :market_cap, :market_cap_dominance, :fully_diluted_market_cap, :tvl
-                )
-                """
-                
-                db_conn.execute(text(insert_statement), dict_record)
-                db_conn.commit()  # Commit the transaction
+                # Loop over the data items and insert each one
+                for data_item in record.data:
+                    # Prepare each dict_record for insertion
+                    dict_record = data_item.model_dump()  # Convert to a dict
 
-                logger.info("Data inserted successfully!")
+                    if data_item.date_added:
+                        dict_record['date_added'] = data_item.date_added.strftime('%Y-%m-%d %H:%M:%S')
+
+                    if data_item.last_updated:
+                        dict_record['last_updated'] = data_item.last_updated.strftime('%Y-%m-%d %H:%M:%S')
+
+                    dict_record['tags'] = json.dumps(data_item.tags)  # Convert list of tags to a JSON string
+                    dict_record['platform'] = json.dumps(data_item.platform.model_dump() if data_item.platform else None)  # Handle platform serialization
+
+                    # Access attributes from the QuoteUSD Pydantic model directly
+                    usd_quote = data_item.quote.get('USD')  # Get the QuoteUSD object for USD
+                    dict_record['price'] = usd_quote.price if usd_quote.price is not None else 0.0
+                    dict_record['volume_24h'] = usd_quote.volume_24h if usd_quote.volume_24h is not None else 0.0
+                    dict_record['volume_change_24h'] = usd_quote.volume_change_24h if usd_quote.volume_change_24h is not None else 0.0
+                    dict_record['percent_change_1h'] = usd_quote.percent_change_1h if usd_quote.percent_change_1h is not None else 0.0
+                    dict_record['percent_change_24h'] = usd_quote.percent_change_24h if usd_quote.percent_change_24h is not None else 0.0
+                    dict_record['percent_change_7d'] = usd_quote.percent_change_7d if usd_quote.percent_change_7d is not None else 0.0
+                    dict_record['percent_change_30d'] = usd_quote.percent_change_30d if usd_quote.percent_change_30d is not None else 0.0
+                    dict_record['percent_change_60d'] = usd_quote.percent_change_60d if usd_quote.percent_change_60d is not None else 0.0
+                    dict_record['percent_change_90d'] = usd_quote.percent_change_90d if usd_quote.percent_change_90d is not None else 0.0
+                    dict_record['market_cap'] = usd_quote.market_cap if usd_quote.market_cap is not None else 0.0
+                    dict_record['market_cap_dominance'] = usd_quote.market_cap_dominance if usd_quote.market_cap_dominance is not None else 0.0
+                    dict_record['fully_diluted_market_cap'] = usd_quote.fully_diluted_market_cap if usd_quote.fully_diluted_market_cap is not None else 0.0
+                    dict_record['tvl'] = usd_quote.tvl if usd_quote.tvl is not None else 0.0
+
+                    # Add the 'status' field
+                    dict_record['status'] = status
+
+                    logger.debug(f"Prepared data for insertion: {dict_record}")
+
+                    # Insert data into the coin_cryptos table
+                    insert_statement = """
+                    INSERT INTO coin_cryptos (
+                        status, id, name, symbol, slug, num_market_pairs, date_added, tags, max_supply,
+                        circulating_supply, total_supply, infinite_supply, platform, cmc_rank,
+                        self_reported_circulating_supply, self_reported_market_cap, tvl_ratio, last_updated,
+                        price, volume_24h, volume_change_24h, percent_change_1h, percent_change_24h,
+                        percent_change_7d, percent_change_30d, percent_change_60d, percent_change_90d,
+                        market_cap, market_cap_dominance, fully_diluted_market_cap, tvl
+                    ) VALUES (
+                        :status, :id, :name, :symbol, :slug, :num_market_pairs, :date_added, :tags, :max_supply,
+                        :circulating_supply, :total_supply, :infinite_supply, :platform, :cmc_rank,
+                        :self_reported_circulating_supply, :self_reported_market_cap, :tvl_ratio, :last_updated,
+                        :price, :volume_24h, :volume_change_24h, :percent_change_1h, :percent_change_24h,
+                        :percent_change_7d, :percent_change_30d, :percent_change_60d, :percent_change_90d,
+                        :market_cap, :market_cap_dominance, :fully_diluted_market_cap, :tvl
+                    )
+                    """
+
+                    # Execute the insertion for each dict_record
+                    db_conn.execute(text(insert_statement), dict_record)
+
+                db_conn.commit()  # Commit the transaction once all records are inserted
+                logger.info("All data inserted successfully!")
 
         except SQLAlchemyError as e:
             logger.exception(f"SQLAlchemy Error: {e}")
@@ -178,7 +163,7 @@ def write_to_database(cloud_event):
             logger.error(f"Invalid JSON string: {str_record}")
         except Exception as e:
             logger.exception(f"Unexpected error: {e}")
-    
+
     # Get the message from the event that triggered this run
     t_record = base64.b64decode(cloud_event.data["message"]["data"])
     logger.debug(f"Raw Pub/Sub message: {cloud_event.data['message']['data']}")

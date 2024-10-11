@@ -3,6 +3,8 @@ import base64
 import json
 from unittest.mock import MagicMock
 import os
+from sqlalchemy.exc import SQLAlchemyError
+
 
 @pytest.fixture
 def mock_env_vars(monkeypatch):
@@ -36,8 +38,8 @@ def mock_pubsub_event():
     return mock_event
 
 
-def test_write_to_database(mocker, mock_pubsub_event, mock_env_vars):
-    """Test the write_to_database function with mocked Cloud SQL and Pub/Sub."""
+def test_write_to_database_sqlalchemy_error(mocker, mock_pubsub_event, mock_env_vars):
+    """Test the write_to_database function with mocked Cloud SQL and SQLAlchemy, simulating a SQLAlchemy error."""
 
     # Mock the Google Cloud SQL connector
     mock_connector = mocker.patch('src.write_to_sql.Connector')
@@ -49,8 +51,11 @@ def test_write_to_database(mocker, mock_pubsub_event, mock_env_vars):
     mock_create_engine.return_value = mock_engine
     mock_engine.connect.return_value.__enter__.return_value = mock_connection
 
-    # Mock the server version to prevent TypeError
-    mock_connection.scalar.return_value = '8.0.26'  # Mock MySQL server version
+    # Simulate an SQLAlchemyError when executing the query
+    mock_connection.execute.side_effect = SQLAlchemyError("Test SQLAlchemy Error")
+
+    # Mock the logger to capture the SQLAlchemy error log
+    mock_logger = mocker.patch('src.write_to_sql.logger')
 
     # Import the function after environment variables are set
     from src.write_to_sql import write_to_database
@@ -58,11 +63,8 @@ def test_write_to_database(mocker, mock_pubsub_event, mock_env_vars):
     # Call the function with the mocked Pub/Sub event
     write_to_database(mock_pubsub_event)
 
-    # Assert that the engine was created and the connection was made
-    mock_create_engine.assert_called_once()  # Ensure the engine was created
-    mock_connection.execute.assert_called()  # Ensure the SQL statement was executed
+    # Ensure that the logger captured the SQLAlchemy error
+    mock_logger.exception.assert_called_with("SQLAlchemy Error: Test SQLAlchemy Error")
 
-    # Check if data was inserted successfully by confirming SQL queries were executed
-    assert mock_connection.execute.call_count > 0
-
-    print("Test passed!")
+    # Check that the function did not crash and continued running
+    print("SQLAlchemy error test passed!")

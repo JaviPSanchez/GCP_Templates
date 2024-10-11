@@ -12,10 +12,10 @@ from logging_config import configure_logger
 configure_logger()
 
 # Load environment variables from .env file
-load_dotenv("./assets/.env.local")
+load_dotenv("./secrets/.env.local")
 
 # Set the environment variable for Google Application Credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./assets/key_access_sql.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./secrets/key_access_sql.json"
 
 # Environment variables
 logger.debug("Attempting to load environment variables!")
@@ -75,47 +75,6 @@ def ingest_to_db():
             databases = result.fetchall()
             for db in databases:
                 logger.debug(f"Database: {db[0]}")
-                
-            # Create the coin_data table if it doesn't exist
-            create_table_coin_data = """
-                CREATE TABLE IF NOT EXISTS coin_data (
-                    auto_id INT PRIMARY KEY AUTO_INCREMENT,
-                    id INT,
-                    name VARCHAR(255),
-                    symbol VARCHAR(10),
-                    category VARCHAR(50),
-                    description TEXT,
-                    slug VARCHAR(100),
-                    logo VARCHAR(255),
-                    subreddit VARCHAR(255),
-                    notice VARCHAR(255),
-                    tags JSON,
-                    tag_names JSON,
-                    tag_groups JSON,
-                    website_url VARCHAR(255),
-                    twitter_url VARCHAR(255),
-                    message_board_url VARCHAR(255),
-                    chat_url VARCHAR(255),
-                    facebook_url VARCHAR(255),
-                    explorer_url VARCHAR(255),
-                    reddit_url VARCHAR(255),
-                    technical_doc_url VARCHAR(255),
-                    source_code_url VARCHAR(255),
-                    announcement_url VARCHAR(255),
-                    platform VARCHAR(100),
-                    date_added DATETIME,
-                    twitter_username VARCHAR(255),
-                    is_hidden BOOLEAN,
-                    date_launched DATETIME,
-                    contract_address JSON,
-                    self_reported_circulating_supply DECIMAL(20, 10),
-                    self_reported_tags JSON,
-                    self_reported_market_cap DECIMAL(20, 10),
-                    infinite_supply BOOLEAN
-                );
-            """
-            db_conn.execute(text(create_table_coin_data))
-            logger.info("coin_data table created or already exists.")
             
             # Create the coin_cryptos table if it doesn't exist
             create_table_coin_cryptos = """
@@ -135,11 +94,11 @@ def ingest_to_db():
                 infinite_supply BOOLEAN,
                 platform VARCHAR(255),
                 cmc_rank INT,
-                self_reported_circulating_supply DECIMAL(20, 10) NULL,
-                self_reported_market_cap DECIMAL(20, 10) NULL,
-                tvl_ratio DECIMAL(20, 10) NULL,
+                self_reported_circulating_supply DECIMAL(30, 10) NULL,
+                self_reported_market_cap DECIMAL(30, 10) NULL,
+                tvl_ratio DECIMAL(30, 10) NULL,
                 last_updated DATETIME,
-                price DECIMAL(20, 10) NULL,
+                price DECIMAL(30, 10) NULL,
                 volume_24h DECIMAL(30, 10) NULL,
                 volume_change_24h DECIMAL(30, 10) NULL,
                 percent_change_1h DECIMAL(30, 10) NULL,

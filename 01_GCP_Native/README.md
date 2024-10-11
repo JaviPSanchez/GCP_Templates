@@ -1,6 +1,6 @@
 # GCP Native Project Pipeline
 
-Welcome to the **GCP Native Project Templates** repository! This project demonstrates how to set up a fully native GCP pipeline using various Google Cloud services to build a robust, scalable data platform. The project leverages a combination of GCP services to integrate data, process it, and visualize insights effectively.
+This project is the first in a series that demonstrates how to build a fully native pipeline using various Google Cloud services to design a robust, scalable data platform. By leveraging the power of GCP’s serverless and managed services, you'll learn how to integrate, process, and visualize data efficiently.
 
 ![Image](../assets/gcp-native.png "GCP Professional Engineer Projects")
 
@@ -44,11 +44,11 @@ Welcome to the **GCP Native Project Templates** repository! This project demonst
 
 ## Key Features
 
-- **Automated Scheduling**: Use Cloud Scheduler to automate data ingestion and processing, for this project each minute!
-- **Real-time Processing**: Cloud Pub/Sub and Cloud Functions enable real-time data processing workflows.
-- **Scalable Database**: Cloud SQL serves as the core relational database for data storage.
-- **Data Visualization**: Visualize results with Looker Studio and Grafana.
-- **Logging and Monitoring**: Implement robust logging and monitoring practices with Cloud Logging and Grafana.
+- **GCP Native Services**: Fully leverages services such as Cloud Pub/Sub, Cloud Functions, BigQuery, Cloud SQL, and more.
+- **Pub/Sub Architecture**: Designed with a Pub/Sub messaging system to enable reliable, real-time data integration.
+- **Serverless Streaming Pipeline**: Serverless functions provide a scalable, cost-efficient pipeline for processing and streaming data.
+- **Seamless Data Visualization**: Data is visualized through Looker Studio, bringing insights to life with minimal effort.
+- **Logging and Monitoring**: Implement robust logging and monitoring practices with Cloud Logging and Cloud Monitoring.
 
 ## Project Overview
 

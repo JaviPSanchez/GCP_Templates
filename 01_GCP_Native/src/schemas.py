@@ -16,6 +16,13 @@ class QuoteUSD(BaseModel):
     market_cap_dominance: float
     fully_diluted_market_cap: Optional[float]
     tvl: Optional[float]
+    
+class Platform(BaseModel):
+    id: Optional[int]
+    name: Optional[str]
+    symbol: Optional[str]
+    slug: Optional[str]
+    token_address: Optional[str]
 
 class DataItem(BaseModel):
     id: int
@@ -29,7 +36,7 @@ class DataItem(BaseModel):
     circulating_supply: float
     total_supply: float
     infinite_supply: bool
-    platform: Optional[str]
+    platform: Optional[Platform]
     cmc_rank: int
     self_reported_circulating_supply: Optional[float]
     self_reported_market_cap: Optional[float]
