@@ -28,7 +28,7 @@ This project is the first in a series that demonstrates how to build a fully nat
    Fully managed data warehouse for analytics.
 
 8. **Looker Studio**
-   Previously known as Google Data Studio, is a powerful data visualization and business intelligence tool.
+   Previously known as Google Data Studio, is a powerful data visualization and BI tool.
 
 9. **VPC Network**  
    Isolated network infrastructure for managing resources securely.
