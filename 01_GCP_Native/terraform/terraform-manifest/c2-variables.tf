@@ -14,6 +14,11 @@ variable "ssh_source_range" {
   type        = list(string)
 }
 
+variable "ssh_port" {
+  description = "Allowed SSH port"
+  type        = list(string)
+}
+
 variable "http_source_range" {
   description = "Allowed HTTP source IPs"
   type        = list(string)
