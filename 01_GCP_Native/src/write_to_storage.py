@@ -1,10 +1,12 @@
+# Libraries
 import os
 import base64
 import json
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
+# GCP
 from google.cloud import storage
 import functions_framework
-from loguru import logger
 # Custom Logging
 from loguru import logger
 from logging_config import configure_logger
@@ -45,6 +47,13 @@ def write_to_storage(bucket_name, file_name, data):
         logger.info(f"File {file_name} uploaded to {bucket_name}.")
     except Exception as e:
         logger.exception(f"Error in write_to_storage: {e}")
+        
+def get_utc_plus_2_timestamp():
+    """Generate a timestamp for UTC+2."""
+    utc_now = datetime.utcnow()
+    utc_plus_2 = utc_now + timedelta(hours=2)
+    
+    return utc_plus_2.strftime('%Y-%m-%dT%H-%M-%S')
 
 # Triggered from a message on a Cloud Pub/Sub topic.
 @functions_framework.cloud_event
@@ -65,8 +74,11 @@ def write_to_database(cloud_event):
        
         logger.info(f"JSON loaded: {dict_record}")
 
+
+        # Generate a filename using the current timestamp in UTC+2
+        timestamp = get_utc_plus_2_timestamp()
         # Generate a filename using the timestamp from the dict_record
-        file_name = f"{dict_record['status']['timestamp']}.json"
+        file_name = f"Minute/{timestamp}.json"
     
         logger.info(f"Generated file name: {file_name}")
 

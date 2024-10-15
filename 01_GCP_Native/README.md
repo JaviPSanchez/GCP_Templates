@@ -92,7 +92,9 @@ Key components of the OLAP pipeline:
 Cloud Storage: Stores historical market data for processing.
 BigQuery: Performs large-scale analytical queries to track trends, such as market cap dominance and price fluctuations over different time frames.
 Looker Studio: Used to build dashboards for monitoring the state of the cryptocurrency market, helping visualize both real-time data and historical trends.
+
 Example Use Cases
+
 OLTP: Use the OLTP pipeline to update your application with the latest cryptocurrency prices, volumes, and supply from the CoinMarketCap API. This allows users to view real-time market data such as the Bitcoin price and market cap.
 
 OLAP: Use the OLAP pipeline to generate reports and dashboards showing historical trends. For instance, users can analyze the percent change in Bitcoin price over 7 days (-1.38%) or compare it against other cryptocurrencies for long-term investment strategies.
